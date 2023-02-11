@@ -1,3 +1,5 @@
+import threading
+import pythoncom
 from docxtpl import DocxTemplate
 import pathlib
 import asyncio
@@ -8,6 +10,9 @@ from docx2pdf import convert
 import fitz
 
 cur_path = pathlib.Path(__file__).parent.resolve()
+
+global_address_layout = []
+i = 0
 
 def get_global_path(local_path):
     global_path = str(cur_path) + local_path
@@ -25,7 +30,6 @@ def merge_files(path1, path2):
         page.show_pdf_page(page.rect, page_front, pno=0, keep_proportion=True, overlay=True, oc=0, rotate=0, clip=None)
 
     doc1.save('result.pdf', encryption=fitz.PDF_ENCRYPT_KEEP)
-
 
 def merge_pdfs(paths_list):
     doc1 = fitz.open(paths_list[0])
@@ -59,25 +63,56 @@ def str_to_labeldict(address):
     return out_dict
 
 
-def create_address_labels(address_layout):
+def og_convert(path_in, result_path):
+    pythoncom.CoInitialize()
+    convert(path_in, result_path)
+
+
+def create_part_pdf(company, coord, address):
+    folder = f'./templates/{company}-labels'
+    file_path = f'/{coord[0]}-{coord[1]}.docx'
+    label_path = folder + file_path
+    doc = DocxTemplate(label_path)
+    context = str_to_labeldict(address['address'])
+    doc.render(context)
+    out_path = './temp_files' + file_path
+    doc.save(out_path)
+    abs_path = get_global_path(out_path)
+    og_convert(abs_path, abs_path.replace('.docx', '.pdf'))
+    os.remove(abs_path)
+
+
+def create_pdfs(address_layout):
     pdf_paths = []
+    global global_address_layout
+    global_address_layout = address_layout
+    threads = []
     for address in address_layout:
         company = address['company']
         coord = address['coord']
         if not company:
             continue
-        folder = f'./templates/{company}-labels'
-        file_path = f'/{coord[0]}-{coord[1]}.docx'
-        label_path = folder + file_path
-        doc = DocxTemplate(label_path)
-        context = str_to_labeldict(address['address'])
-        doc.render(context)
-        out_path = './temp_files' + file_path
-        doc.save(out_path)
-        abs_path = get_global_path(out_path)
-        convert(abs_path, abs_path.replace('.docx', '.pdf'))
-        pdf_paths.append(out_path.replace('.docx','.pdf'))
-        os.remove(abs_path)
+        t1 = threading.Thread(target=create_part_pdf, args=(company, coord, address))
+        threads.append(t1)
+        pdf_path = f'./temp_files/{coord[0]}-{coord[1]}.pdf'
+        pdf_paths.append(pdf_path)
+
+    for x in threads:
+        print('starting thread')
+        x.start()
+
+    for x in threads:
+        print('joining thread')
+        x.join()
+
+    print('finished')
+
+    return pdf_paths
+
+
+
+def print_address_labels(address_layout):
+    pdf_paths = create_pdfs(address_layout)
 
     result_path = merge_pdfs(pdf_paths)
     for path in pdf_paths:
@@ -110,7 +145,7 @@ class AddressWindow(tk.Frame):
 
         self.boxes.pack()
 
-        submit_btn = ttk.Button(self, text='Submit', command=lambda: self.submit_form())
+        submit_btn = ttk.Button(self, text='Submit', command=lambda: self.threading_form())
         submit_btn.pack()
 
     def submit_form(self):
@@ -118,7 +153,11 @@ class AddressWindow(tk.Frame):
         for item in self.boxes.winfo_children():
             list_out.append(item.get_info())
 
-        create_address_labels(list_out)
+        print_address_labels(list_out)
+
+    def threading_form(self):
+        t1 = threading.Thread(target=self.submit_form)
+        t1.start()
 
 
 class AddressBox(tk.Frame):
@@ -190,4 +229,4 @@ if __name__ == '__main__':
     root = tk.Tk()
     window = AddressWindow(root)
     window.pack(side='top', fill='both', expand=True)
-    root.mainloop()
+    threading.Thread(target=root.mainloop())
