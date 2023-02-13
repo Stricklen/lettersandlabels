@@ -59,7 +59,7 @@ class LettersWindow(tk.Frame):
 
     def print_letters(self):
         names_list = self.name_entry.get().split(',')
-        main.print_letters(names_list, str(self.company.get()).lower(), str(self.country.get()).lower())
+        asyncio.run(main.print_letters(names_list, str(self.company.get()).lower(), str(self.country.get()).lower()))
         messagebox.showinfo(title='SUCCESS!', message='Successfully printing letters')
 
     def threading_letters(self):

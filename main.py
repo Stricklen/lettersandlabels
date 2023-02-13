@@ -3,6 +3,7 @@ from win32com import client
 import pathlib
 import asyncio
 import os
+import pythoncom
 
 cur_path = pathlib.Path(__file__).parent.resolve()
 
@@ -21,6 +22,8 @@ def fill_label_context(dict_in):
 
 
 async def print_file(file_path):
+    pythoncom.CoInitialize()
+    word = client.Dispatch("Word.Application")
     word.Documents.Open(file_path)
     print('file opened')
     word.ActiveDocument.PrintOut()
@@ -53,7 +56,6 @@ async def print_letters(names_list, company, country=''):
         os.remove(abs_path)
 
 
-
 def str_to_labeldict(address, box_number):
     split_by_lines = address.split('\n')
     if len(split_by_lines) > boxes:
@@ -64,56 +66,13 @@ def str_to_labeldict(address, box_number):
     return out_dict
 
 
-async def print_labels(addresses, company):
-    doc_path = f'./templates/{company}-labels.docx'
-
-    doc = DocxTemplate(doc_path)
-
-    context = {}
-    i=1
-    for item in addresses:
-        cur_context = str_to_labeldict(item, i)
-        context.update(cur_context)
-        i+=1
-
-    doc.render(fill_label_context(context))
-
-    file_name = f'{company}-temp-labels.docx'
-    local_path = f'./temp_files/{file_name}'
-
-    doc.save(local_path)
-
-
 def del_temps():
     all_items = os.listdir('./temp_files')
     temps_path = get_global_path('/temp_files/')
     for item in all_items:
         my_path = temps_path + item
-        print(my_path)
         os.remove(my_path)
 
 
-test_names = [
-        'Steve',
-        'Bob',
-        'Susan',
-        'Leon',
-        'Lee',
-        'AJ',
-        'Jay'
-    ]
-
-test_addresses = [
-    "Stephen Richardson\nFlat 1, 143 Court Oak Road\nHarborne\nBirmingham\nB17 9AA\nUK",
-    "Jessica Vail\nFlat 1, 143 Court Oak Road\nHarborne\nBirmingham\nB17 9AA\nUK",
-    "Thomas Page\nTesting House\nTestville\nTrimley St Mary\nL69 5LL\nUK",
-    "Aidan Monteith\n1 Civ Gardens\nStraston\nYour Mum\nX11 1XX\nUK",
-    "Aidan Monteith\n1 Civ Gardens\nStraston\nYour Mum\nX11 1XX\nUK",
-    "Aidan Monteith\n1 Civ Gardens\nStraston\nYour Mum\nX11 1XX\nUK",
-    "Baidan Monteith\n1 Civ Gardens\nStraston\nYour Mum\nX11 1XX\nUK",
-]
-
-
 if __name__ == '__main__':
-    # asyncio.run(print_letters(test_names, 'nrs'))
-    asyncio.run(print_labels(test_addresses,'crs'))
+    print('attempting to run main.py, try running gui.py instead.')

@@ -216,17 +216,6 @@ class AddressBox(tk.Frame):
         address = self.address_box.get('1.0', 'end-1c')
         return {'company':self.selection.get(), 'address':address, 'coord':self.coord}
 
-address_list = [
-    {'company': 'nrs', 'address': 'one', 'coord': (0, 0)},
-    {'company': 'nrs', 'address': 'two', 'coord': (0, 1)},
-    {'company': 'nrs', 'address': 'three', 'coord': (1, 0)},
-    {'company': 'nrs', 'address': 'four', 'coord': (1, 1)},
-    {'company': 'nrs', 'address': 'five', 'coord': (2, 0)},
-    {'company': 'nrs', 'address': 'six', 'coord': (2, 1)}]
-
 
 if __name__ == '__main__':
-    root = tk.Tk()
-    window = AddressWindow(root)
-    window.pack(side='top', fill='both', expand=True)
-    threading.Thread(target=root.mainloop())
+    print('attempting to run address_pdf.py, try running gui.py instead.')
