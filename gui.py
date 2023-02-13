@@ -52,13 +52,14 @@ class LettersWindow(tk.Frame):
                                           text='Letters: seperate names with ,',
                                           width=30)
         letters_container.grid(row=1, column=0)
-        self.name_entry = ttk.Entry(letters_container, width=50)
+        self.name_entry = tk.Text(letters_container, height=40, width=30)
         self.name_entry.pack()
         submit_btn = ttk.Button(letters_container, text='Print', command=lambda: self.threading_letters())
         submit_btn.pack()
 
     def print_letters(self):
-        names_list = self.name_entry.get().split(',')
+        names_entry = self.name_entry.get('1.0', 'end-1c').split('\n')
+        names_list = [name.strip().capitalize() for name in names_entry if name]
         asyncio.run(main.print_letters(names_list, str(self.company.get()).lower(), str(self.country.get()).lower()))
         messagebox.showinfo(title='SUCCESS!', message='Successfully printing letters')
 
