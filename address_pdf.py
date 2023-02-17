@@ -99,7 +99,7 @@ def create_pdfs(address_layout, progress_window):
             progress_window.bump(increment)
             continue
         address_num = address_layout.index(address)
-        progress_window.set_status('Creating address pdf {}'.format(address_num))
+        progress_window.set_status('Creating address pdf {}'.format(address_num+1))
         create_part_pdf(company, coord, address)
         pdf_path = f'./temp_files/{coord[0]}-{coord[1]}.pdf'
         pdf_paths.append(pdf_path)
