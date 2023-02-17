@@ -110,9 +110,15 @@ def create_pdfs(address_layout, progress_window):
 
 def print_address_labels(address_layout, progress_window):
     address_count = 0
+    blanks = []
     for item in address_layout:
         if item['address']:
             address_count += 1
+        else:
+            blanks.append(item)
+    if blanks:
+        for blank in blanks:
+            address_layout.remove(blank)
     if address_count == 0:
         return False
     progress_window.started()
