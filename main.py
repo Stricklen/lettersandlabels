@@ -37,23 +37,36 @@ def get_global_path(local_path):
     return global_path.replace('/',r'\^').replace('^','')
 
 
-async def print_letters(names_list, company, country=''):
+async def print_letters(names_list, company, progress_window, country='',):
     # find document for template
+    list_len = len(names_list)
+    if list_len == 0:
+        return False
+    progress_window.pack()
+    increment = 100/list_len
+    progress_window.started()
+
     doc_path = f'./templates/{company}-letter.docx'
     if country:
         doc_path = doc_path.replace('.',f'-{country}.')
 
     doc = DocxTemplate(doc_path)  # open template
 
+    i = 0
     for name in names_list:
+        progress_window.set_status(f'Creating letter for: {name}')
         context = {'name':name}
         doc.render(context)
         file_name = f'{company}-temp-{names_list.index(name)}.docx'
         local_path = f'./temp_files/{file_name}'
         doc.save(local_path)
         abs_path = get_global_path(local_path[1:])
+        progress_window.set_status(f'Printing letter for: {name}')
         await print_file(abs_path)
         os.remove(abs_path)
+        i+=1
+        progress_window.set_progress(increment * i)
+    return True
 
 
 def str_to_labeldict(address, box_number):

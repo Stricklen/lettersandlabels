@@ -9,10 +9,12 @@ from tkinter import ttk
 from docx2pdf import convert
 import fitz
 
+
 cur_path = pathlib.Path(__file__).parent.resolve()
 
 global_address_layout = []
 i = 0
+
 
 def get_global_path(local_path):
     global_path = str(cur_path) + local_path
@@ -30,6 +32,7 @@ def merge_files(path1, path2):
         page.show_pdf_page(page.rect, page_front, pno=0, keep_proportion=True, overlay=True, oc=0, rotate=0, clip=None)
 
     doc1.save('result.pdf', encryption=fitz.PDF_ENCRYPT_KEEP)
+
 
 def merge_pdfs(paths_list):
     doc1 = fitz.open(paths_list[0])
@@ -86,29 +89,16 @@ def create_pdfs(address_layout):
     pdf_paths = []
     global global_address_layout
     global_address_layout = address_layout
-    threads = []
     for address in address_layout:
         company = address['company']
         coord = address['coord']
         if not company:
             continue
-        t1 = threading.Thread(target=create_part_pdf, args=(company, coord, address))
-        threads.append(t1)
+        create_part_pdf(company, coord, address)
         pdf_path = f'./temp_files/{coord[0]}-{coord[1]}.pdf'
         pdf_paths.append(pdf_path)
 
-    for x in threads:
-        print('starting thread')
-        x.start()
-
-    for x in threads:
-        print('joining thread')
-        x.join()
-
-    print('finished')
-
     return pdf_paths
-
 
 
 def print_address_labels(address_layout):
@@ -119,102 +109,6 @@ def print_address_labels(address_layout):
         os.remove(get_global_path(path))
 
     os.startfile(get_global_path(result_path), 'Print')
-
-
-class AddressWindow(tk.Frame):
-    def __init__(self,parent, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-
-        self.boxes = tk.Frame(self)
-
-        self.coords = [
-            (0,0),
-            (0,1),
-            (1,0),
-            (1,1),
-            (2,0),
-            (2,1)
-        ]
-
-        self.create_env()
-
-    def create_env(self):
-        for coord in self.coords:
-            address_box = AddressBox(self.boxes, coord)
-            address_box.grid(row=coord[0], column=coord[1], padx=5, pady=5)
-
-        self.boxes.pack()
-
-        submit_btn = ttk.Button(self, text='Submit', command=lambda: self.threading_form())
-        submit_btn.pack()
-
-    def submit_form(self):
-        list_out = []
-        for item in self.boxes.winfo_children():
-            list_out.append(item.get_info())
-
-        print_address_labels(list_out)
-
-    def threading_form(self):
-        t1 = threading.Thread(target=self.submit_form)
-        t1.start()
-
-
-class AddressBox(tk.Frame):
-    def __init__(self, parent, coord, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-        self.coord = coord
-        self.variables = ['nrs', 'crs', 'rc', 'nhr']
-        self.selection = tk.StringVar()
-        self.selection.set('nrs')
-
-        self.address_box = tk.Text(self, height=10, width=40, wrap='none')
-
-        self.create_env()
-
-
-    def create_env(self):
-        none_check = ttk.Radiobutton(self,
-                                     text='Disabled',
-                                     variable=self.selection,
-                                     value='',
-                                     command=lambda: self.disable_entry())
-        none_check.grid(row=0, column=0)
-        nrs_check = ttk.Radiobutton(self,
-                                    text='NRS',
-                                    variable=self.selection,
-                                    value='nrs',
-                                    command=lambda: self.enable_entry())
-        nrs_check.grid(row=0, column=1)
-        crs_check = ttk.Radiobutton(self,
-                                    text='CRS',
-                                    variable=self.selection,
-                                    value='crs',
-                                    command=lambda: self.enable_entry())
-        crs_check.grid(row=0, column=2)
-        rc_check = ttk.Radiobutton(self,
-                                   text='RC',
-                                   variable=self.selection,
-                                   value='rc',
-                                   command=lambda: self.enable_entry())
-        rc_check.grid(row=0, column=3)
-        nhr_check = ttk.Radiobutton(self,
-                                    text='NHR',
-                                    variable=self.selection,
-                                    value='nhr',
-                                    command=lambda: self.enable_entry())
-        nhr_check.grid(row=0, column=4)
-
-        self.address_box.grid(row=1, column=0, columnspan=5)
-
-    def enable_entry(self):
-        self.address_box.config(state='normal', bg='white')
-    def disable_entry(self):
-        self.address_box.config(state='disabled', bg='light grey')
-
-    def get_info(self):
-        address = self.address_box.get('1.0', 'end-1c')
-        return {'company':self.selection.get(), 'address':address, 'coord':self.coord}
 
 
 if __name__ == '__main__':
