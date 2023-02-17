@@ -4,6 +4,7 @@ import threading
 import main
 import asyncio
 import address_pdf as ad_pdf
+import time
 
 
 class AddressWindow(tk.Frame):
@@ -22,6 +23,7 @@ class AddressWindow(tk.Frame):
         ]
 
         self.create_env()
+        self.progress = ProgressFrame(self)
 
     def create_env(self):
         for coord in self.coords:
@@ -38,7 +40,9 @@ class AddressWindow(tk.Frame):
         for item in self.boxes.winfo_children():
             list_out.append(item.get_info())
 
-        ad_pdf.print_address_labels(list_out)
+        ad_pdf.print_address_labels(list_out, self.progress)
+        time.sleep(2)
+        self.progress.reset()
 
     def threading_form(self):
         t1 = threading.Thread(target=self.submit_form)
@@ -213,7 +217,6 @@ class ProgressFrame(tk.Frame):
 
     def bump(self,value):
         self.progress['value'] += value
-        print(self.progress['value'])
         if self.progress['value'] > 100:
             self.progress['value'] = 0
         self.update_idletasks()

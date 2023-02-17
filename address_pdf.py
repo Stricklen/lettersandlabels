@@ -8,11 +8,11 @@ import tkinter as tk
 from tkinter import ttk
 from docx2pdf import convert
 import fitz
+from math import ceil
 
 
 cur_path = pathlib.Path(__file__).parent.resolve()
 
-global_address_layout = []
 i = 0
 
 
@@ -34,23 +34,27 @@ def merge_files(path1, path2):
     doc1.save('result.pdf', encryption=fitz.PDF_ENCRYPT_KEEP)
 
 
-def merge_pdfs(paths_list):
+def merge_pdfs(paths_list, progress_window):
     doc1 = fitz.open(paths_list[0])
-
-    if len(paths_list)>1:
-        for path in paths_list[1:]:
-            doc2 = fitz.open(path)
-            page = doc1.load_page(0)
-            page_front = fitz.open()
-            page_front.insert_pdf(doc2)
-            page.show_pdf_page(page.rect,
-                               page_front,
-                               pno=0,
-                               keep_proportion=True,
-                               overlay=True,
-                               oc=0,
-                               rotate=0,
-                               clip=None)
+    num_paths = len(paths_list)
+    if num_paths <=1:
+        return
+    increment = 100/num_paths
+    progress_window.set_progress(increment)
+    for path in paths_list[1:]:
+        doc2 = fitz.open(path)
+        page = doc1.load_page(0)
+        page_front = fitz.open()
+        page_front.insert_pdf(doc2)
+        page.show_pdf_page(page.rect,
+                            page_front,
+                            pno=0,
+                            keep_proportion=True,
+                            overlay=True,
+                            oc=0,
+                            rotate=0,
+                            clip=None)
+        progress_window.bump(increment)
 
     result_path = './temp_files/result.pdf'
 
@@ -85,29 +89,46 @@ def create_part_pdf(company, coord, address):
     os.remove(abs_path)
 
 
-def create_pdfs(address_layout):
+def create_pdfs(address_layout, progress_window):
     pdf_paths = []
-    global global_address_layout
-    global_address_layout = address_layout
+    increment = 100/len(address_layout)
     for address in address_layout:
         company = address['company']
         coord = address['coord']
         if not company:
+            progress_window.bump(increment)
             continue
+        address_num = address_layout.index(address)
+        progress_window.set_status('Creating address pdf {}'.format(address_num))
         create_part_pdf(company, coord, address)
         pdf_path = f'./temp_files/{coord[0]}-{coord[1]}.pdf'
         pdf_paths.append(pdf_path)
-
+        progress_window.set_status('')
+        progress_window.bump(increment)
     return pdf_paths
 
 
-def print_address_labels(address_layout):
-    pdf_paths = create_pdfs(address_layout)
+def print_address_labels(address_layout, progress_window):
+    address_count = 0
+    for item in address_layout:
+        if item['address']:
+            address_count += 1
+    if address_count == 0:
+        return False
+    progress_window.started()
+    progress_window.pack()
+    progress_window.set_progress(0)
+    progress_window.set_status('Creating address pdfs...')
+    pdf_paths = create_pdfs(address_layout, progress_window)
 
-    result_path = merge_pdfs(pdf_paths)
+    progress_window.set_progress(0)
+    progress_window.set_status('Merging addresses...')
+    result_path = merge_pdfs(pdf_paths, progress_window)
     for path in pdf_paths:
         os.remove(get_global_path(path))
 
+    progress_window.set_status('Printing...')
+    progress_window.progress.pack_forget()
     os.startfile(get_global_path(result_path), 'Print')
 
 
