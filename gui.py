@@ -23,7 +23,6 @@ class AddressWindow(tk.Frame):
         ]
 
         self.create_env()
-        self.progress = ProgressFrame(self)
 
     def create_env(self):
         for coord in self.coords:
@@ -36,13 +35,12 @@ class AddressWindow(tk.Frame):
         submit_btn.pack()
 
     def submit_form(self):
+        progress = ProgressFrame(self)
         list_out = []
         for item in self.boxes.winfo_children():
             list_out.append(item.get_info())
-
-        ad_pdf.print_address_labels(list_out, self.progress)
-        time.sleep(2)
-        self.progress.reset()
+        progress.pack()
+        ad_pdf.add_to_queue((list_out, progress))
 
     def threading_form(self):
         t1 = threading.Thread(target=self.submit_form)
@@ -127,7 +125,6 @@ class LettersWindow(tk.Frame):
         self.container = tk.Frame(self)
         self.container.pack()
         self.create_env()
-        self.progress = ProgressFrame(self)
 
     def create_env(self):
         options_frame = ttk.LabelFrame(self.container, text='Options')
@@ -163,25 +160,19 @@ class LettersWindow(tk.Frame):
         submit_btn.pack()
 
     def print_letters(self):
+        progress = ProgressFrame(self)
         self.update()
         names_entry = self.name_entry.get('1.0', 'end-1c').split('\n')
         names_list = [name.strip().capitalize() for name in names_entry if name]
         company = str(self.company.get())
         country = str(self.country.get())
-        success = asyncio.run(
-            main.print_letters(
-                names_list,
-                company.lower(),
-                self.progress,
-                country.lower(),
-            )
+        progress.pack()
+        main.add_to_queue(
+            (names_list,
+            company.lower(),
+            progress,
+            country.lower(),)
         )
-        if success:
-            msg = 'Successfully printing {} {} letters for:\n'.format(company, country)
-            for name in names_list:
-                msg += f'{name}, '
-            messagebox.showinfo(title='SUCCESS!', message=msg)
-        self.progress.reset()
 
     def threading_letters(self):
         t1 = threading.Thread(target=self.print_letters)

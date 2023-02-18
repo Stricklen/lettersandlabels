@@ -1,4 +1,6 @@
 import threading
+import time
+
 import pythoncom
 from docxtpl import DocxTemplate
 import pathlib
@@ -13,7 +15,28 @@ from math import ceil
 
 cur_path = pathlib.Path(__file__).parent.resolve()
 
+address_queue = []
+address_queue_active = False
+
 i = 0
+
+
+def run_queue():
+    global address_queue_active, address_queue
+    if address_queue_active:
+        return
+    address_queue_active = True
+    while address_queue:
+        address_layout, progress_window = address_queue[0]
+        print_address_labels(address_layout, progress_window)
+        address_queue.pop(0)
+    address_queue_active = False
+
+
+def add_to_queue(item):
+    global address_queue
+    address_queue.append(item)
+    run_queue()
 
 
 def get_global_path(local_path):
@@ -122,8 +145,6 @@ def print_address_labels(address_layout, progress_window):
     if address_count == 0:
         return False
     progress_window.started()
-    progress_window.pack()
-    progress_window.set_progress(0)
     progress_window.set_status('Creating address pdfs...')
     pdf_paths = create_pdfs(address_layout, progress_window)
 
@@ -136,6 +157,8 @@ def print_address_labels(address_layout, progress_window):
     progress_window.set_status('Printing...')
     progress_window.progress.pack_forget()
     os.startfile(get_global_path(result_path), 'Print')
+    time.sleep(2)
+    progress_window.destroy()
 
 
 if __name__ == '__main__':

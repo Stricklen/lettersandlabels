@@ -12,6 +12,30 @@ word = client.Dispatch("Word.Application")
 boxes = 6
 rows = 10
 
+letter_queue = []
+letter_queue_active = False
+
+i = 0
+
+
+def run_queue():
+    global letter_queue_active, letter_queue
+    if letter_queue_active:
+        return
+    letter_queue_active = True
+    while letter_queue:
+        address_layout, company, progress_window, country  = letter_queue[0]
+        asyncio.run(print_letters(address_layout, company, progress_window, country))
+        letter_queue.pop(0)
+    letter_queue_active = False
+
+
+def add_to_queue(item):
+    global letter_queue
+    letter_queue.append(item)
+    run_queue()
+
+
 def fill_label_context(dict_in):
     for i in range(1,boxes+1):
         for j in range(1,rows+1):
@@ -25,11 +49,8 @@ async def print_file(file_path):
     pythoncom.CoInitialize()
     word = client.Dispatch("Word.Application")
     word.Documents.Open(file_path)
-    print('file opened')
     word.ActiveDocument.PrintOut()
-    print('file printed')
     word.ActiveDocument.Close()
-    print('file closed')
 
 
 def get_global_path(local_path):
@@ -42,7 +63,6 @@ async def print_letters(names_list, company, progress_window, country='',):
     list_len = len(names_list)
     if list_len == 0:
         return False
-    progress_window.pack()
     increment = 100/list_len
     progress_window.started()
 
@@ -54,18 +74,18 @@ async def print_letters(names_list, company, progress_window, country='',):
 
     i = 0
     for name in names_list:
-        progress_window.set_status(f'Creating letter for: {name}')
+        progress_window.set_status(f'{country.upper()} {company.upper()} - Printing letter for: {name}')
         context = {'name':name}
         doc.render(context)
         file_name = f'{company}-temp-{names_list.index(name)}.docx'
         local_path = f'./temp_files/{file_name}'
         doc.save(local_path)
         abs_path = get_global_path(local_path[1:])
-        progress_window.set_status(f'Printing letter for: {name}')
         await print_file(abs_path)
         os.remove(abs_path)
         i+=1
         progress_window.set_progress(increment * i)
+    progress_window.destroy()
     return True
 
 
