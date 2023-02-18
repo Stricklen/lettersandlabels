@@ -1,6 +1,5 @@
 import threading
 import time
-
 import pythoncom
 from docxtpl import DocxTemplate
 import pathlib
