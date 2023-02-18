@@ -1,10 +1,11 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, font
 import threading
 import main
 import asyncio
 import address_pdf as ad_pdf
 import time
+
 
 
 class AddressWindow(tk.Frame):
@@ -55,7 +56,7 @@ class AddressBox(tk.Frame):
         self.selection = tk.StringVar()
         self.selection.set('nrs')
 
-        self.address_box = tk.Text(self, height=10, width=40, wrap='none')
+        self.address_box = tk.Text(self, height=10, width=40, wrap='none', undo=True, maxundo=10)
 
         self.create_env()
 
@@ -102,7 +103,6 @@ class AddressBox(tk.Frame):
     def get_info(self):
         address = self.address_box.get('1.0', 'end-1c')
         return {'company':self.selection.get(), 'address':address, 'coord':self.coord}
-
 
 
 class LettersWindow(tk.Frame):
@@ -154,7 +154,7 @@ class LettersWindow(tk.Frame):
                                           text='Letters: New line for each name',
                                           width=30)
         letters_container.grid(row=0, column=1)
-        self.name_entry = tk.Text(letters_container, height=35, width=30)
+        self.name_entry = tk.Text(letters_container, height=35, width=30, undo=True, maxundo=10)
         self.name_entry.pack()
         submit_btn = ttk.Button(letters_container, text='Print', command=lambda: self.threading_letters())
         submit_btn.pack()
@@ -235,6 +235,7 @@ class App(tk.Frame):
 
 if __name__ == '__main__':
     root = tk.Tk()
+    print(font.families())
     app = App(root)
     app.pack(side='top', fill='both', expand=True)
     root.mainloop()

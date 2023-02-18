@@ -108,4 +108,4 @@ def del_temps():
 
 
 if __name__ == '__main__':
-    print('attempting to run main.py, try running gui.py instead.')
+    print('attempting to run main.py, try running app.py instead.')

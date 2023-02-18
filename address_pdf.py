@@ -161,4 +161,4 @@ def print_address_labels(address_layout, progress_window):
 
 
 if __name__ == '__main__':
-    print('attempting to run address_pdf.py, try running gui.py instead.')
+    print('attempting to run address_pdf.py, try running app.py instead.')
