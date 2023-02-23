@@ -235,7 +235,6 @@ class App(tk.Frame):
 
 if __name__ == '__main__':
     root = tk.Tk()
-    print(font.families())
     app = App(root)
     app.pack(side='top', fill='both', expand=True)
     root.mainloop()
