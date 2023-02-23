@@ -5,4 +5,4 @@
   - Create an empty dir in root folder named 'temp_files'
   - run 'pip install requirements.txt'
 
-# Run gui.py to start the app
+# Run app.py to start the app

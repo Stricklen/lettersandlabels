@@ -59,8 +59,10 @@ def merge_files(path1, path2):
 def merge_pdfs(paths_list, progress_window):
     doc1 = fitz.open(paths_list[0])
     num_paths = len(paths_list)
-    if num_paths <=1:
+    if num_paths <1:
         return
+    if num_paths <1:
+        return paths_list[0]
     increment = 100/num_paths
     progress_window.set_progress(increment)
     for path in paths_list[1:]:
