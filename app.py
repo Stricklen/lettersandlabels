@@ -69,6 +69,8 @@ class AddressBox(tk.Frame):
 
         self.create_env()
 
+        self.update_bg()
+
 
     def create_env(self):
         none_check = ttk.Radiobutton(self,
@@ -81,7 +83,7 @@ class AddressBox(tk.Frame):
                                     text='NRS',
                                     variable=self.selection,
                                     value='nrs',
-                                    command=lambda: self.enable_entry())
+                                    command=lambda: self.update_bg())
         nrs_check.grid(row=0, column=1)
         crs_check = ttk.Radiobutton(self,
                                     text='CRS',
@@ -108,6 +110,17 @@ class AddressBox(tk.Frame):
         self.address_box.config(state='normal', bg='white')
     def disable_entry(self):
         self.address_box.config(state='disabled', bg='light grey')
+
+    def update_bg(self):
+        selection = self.selection.get()
+        if str(selection) == 'nrs':
+            self.address_box['bg'] = 'plum1'
+            return
+        if str(selection):
+            self.enable_entry()
+            return
+        self.disable_entry()
+
 
     def get_info(self):
         address = self.address_box.get('1.0', 'end-1c')
