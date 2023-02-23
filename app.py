@@ -32,9 +32,18 @@ class AddressWindow(tk.Frame):
 
         self.boxes.pack()
 
-        submit_btn = ttk.Button(self, text='Submit', command=lambda: self.threading_form())
-        submit_btn.pack()
+        btn_frame = tk.Frame(self)
+        btn_frame.pack()
 
+        submit_btn = ttk.Button(btn_frame, text='Submit', command=lambda: self.threading_form())
+        submit_btn.grid(row=0, column=0)
+
+        clear_btn = ttk.Button(btn_frame, text='Clear', command=lambda: self.clear_form())
+        clear_btn.grid(row=0, column=1)
+
+    def clear_form(self):
+        for item in self.boxes.winfo_children():
+            item.clear_box()
     def submit_form(self):
         progress = ProgressFrame(self)
         list_out = []
@@ -104,6 +113,9 @@ class AddressBox(tk.Frame):
         address = self.address_box.get('1.0', 'end-1c')
         return {'company':self.selection.get(), 'address':address, 'coord':self.coord}
 
+    def clear_box(self):
+        self.address_box.delete('1.0', 'end-1c')
+
 
 class LettersWindow(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -156,8 +168,18 @@ class LettersWindow(tk.Frame):
         letters_container.grid(row=0, column=1)
         self.name_entry = tk.Text(letters_container, height=35, width=30, undo=True, maxundo=10)
         self.name_entry.pack()
-        submit_btn = ttk.Button(letters_container, text='Print', command=lambda: self.threading_letters())
-        submit_btn.pack()
+
+        btn_frame = tk.Frame(letters_container)
+        btn_frame.pack()
+
+        submit_btn = ttk.Button(btn_frame, text='Print', command=lambda: self.threading_letters())
+        submit_btn.grid(row=0, column=0)
+
+        clear_btn = ttk.Button(btn_frame, text='Clear', command=lambda: self.clear())
+        clear_btn.grid(row=0, column=1)
+
+    def clear(self):
+        self.name_entry.delete('1.0', 'end-1c')
 
     def print_letters(self):
         progress = ProgressFrame(self)
