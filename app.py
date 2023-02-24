@@ -66,6 +66,7 @@ class AddressBox(tk.Frame):
         self.selection.set('nrs')
 
         self.address_box = tk.Text(self, height=10, width=40, wrap='none', undo=True, maxundo=10)
+        self.address_box['font'] = 'Helvetica 14 bold'
 
         self.create_env()
 
@@ -89,32 +90,49 @@ class AddressBox(tk.Frame):
                                     text='CRS',
                                     variable=self.selection,
                                     value='crs',
-                                    command=lambda: self.enable_entry())
+                                    command=lambda: self.update_bg())
         crs_check.grid(row=0, column=2)
         rc_check = ttk.Radiobutton(self,
                                    text='RC',
                                    variable=self.selection,
                                    value='rc',
-                                   command=lambda: self.enable_entry())
+                                   command=lambda: self.update_bg())
         rc_check.grid(row=0, column=3)
         nhr_check = ttk.Radiobutton(self,
                                     text='NHR',
                                     variable=self.selection,
                                     value='nhr',
-                                    command=lambda: self.enable_entry())
+                                    command=lambda: self.update_bg())
         nhr_check.grid(row=0, column=4)
 
         self.address_box.grid(row=1, column=0, columnspan=5)
 
     def enable_entry(self):
-        self.address_box.config(state='normal', bg='white')
+        self.address_box.config(state='normal')
     def disable_entry(self):
-        self.address_box.config(state='disabled', bg='light grey')
+        self.address_box.config(state='disabled', bg='black')
 
     def update_bg(self):
         selection = self.selection.get()
         if str(selection) == 'nrs':
-            self.address_box['bg'] = 'plum1'
+            self.address_box['bg'] = '#CA3092'
+            self.address_box['fg'] = 'white'
+            self.enable_entry()
+            return
+        if str(selection) == 'crs':
+            self.address_box['bg'] = '#CCCCCC'
+            self.address_box['fg'] = 'black'
+            self.enable_entry()
+            return
+        if str(selection) == 'rc':
+            self.address_box['bg'] = 'white'
+            self.address_box['fg'] = '#777777'
+            self.enable_entry()
+            return
+        if str(selection) == 'nhr':
+            self.address_box['bg'] = 'white'
+            self.address_box['fg'] = 'black'
+            self.enable_entry()
             return
         if str(selection):
             self.enable_entry()
