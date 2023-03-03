@@ -7,6 +7,71 @@ import address_pdf as ad_pdf
 import time
 
 
+queue_active = False
+queue_list = []
+
+
+def run_queue():
+    global queue_active, queue_list
+    if queue_active:
+        return
+    queue_active = True
+    while queue_list:
+        if queue_list[0][0] == 'address':
+            address_item = queue_list[0][1]
+            address_layout, progress_window = address_item
+            ad_pdf.print_address_labels(address_layout, progress_window)
+            queue_list.pop(0)
+        elif queue_list[0][0] == 'letter':
+            letter_item = queue_list[0][1]
+            names_list, company, progress_window, country  = letter_item
+            asyncio.run(main.print_letters(names_list, company, progress_window, country))
+            queue_list.pop(0)
+    queue_active = False
+
+
+def queue_item(item):
+    global queue_list
+    queue_list.append(item)
+    run_queue()
+
+
+letter_history = []
+address_history = [
+    [{'company': 'nrs', 'address': '1', 'coord': (0, 0)},
+     {'company': 'nrs', 'address': '2', 'coord': (0, 1)},
+     {'company': 'nrs', 'address': '3', 'coord': (1, 0)},
+     {'company': 'nrs', 'address': '4', 'coord': (1, 1)},
+     {'company': 'nrs', 'address': '5', 'coord': (2, 0)},
+     {'company': 'nrs', 'address': '6', 'coord': (2, 1)}],
+    [{'company': 'nrs', 'address': '7', 'coord': (0, 0)},
+     {'company': 'nrs', 'address': '8', 'coord': (0, 1)},
+     {'company': 'nrs', 'address': '9', 'coord': (1, 0)},
+     {'company': 'nrs', 'address': '10', 'coord': (1, 1)},
+     {'company': 'nrs', 'address': '11', 'coord': (2, 0)},
+     {'company': 'nrs', 'address': '12', 'coord': (2, 1)}],
+    [{'company': 'nrs', 'address': '13', 'coord': (0, 0)},
+     {'company': 'nrs', 'address': '14', 'coord': (0, 1)},
+     {'company': 'nrs', 'address': '15', 'coord': (1, 0)},
+     {'company': 'nrs', 'address': '16', 'coord': (1, 1)},
+     {'company': 'nrs', 'address': '17', 'coord': (2, 0)},
+     {'company': 'nrs', 'address': '18', 'coord': (2, 1)}],
+]
+
+
+def loadPreviousWindow():
+    new_window = tk.Toplevel(root)
+    new_window.title('new window')
+    print(address_history)
+    tk.Label(new_window, text='This is a new window').pack()
+
+
+class AddressHistoryTable(ttk.Treeview):
+    def __init__(self, parent, *args, **kwargs):
+        columns = tuple([f'address{n}' for n in range(6)])
+
+        ttk.Treeview.__init__(self, parent, columns=columns, show='headings', *args, **kwargs)
+
 
 class AddressWindow(tk.Frame):
     def __init__(self,parent, *args, **kwargs):
@@ -41,20 +106,35 @@ class AddressWindow(tk.Frame):
         clear_btn = ttk.Button(btn_frame, text='Clear', command=lambda: self.clear_form())
         clear_btn.grid(row=0, column=1)
 
+        load_previous_btn = ttk.Button(btn_frame, text='Load Previous', command=lambda: loadPreviousWindow())
+        load_previous_btn.grid(row=0, column=2)
+
     def clear_form(self):
         for item in self.boxes.winfo_children():
             item.clear_box()
+
     def submit_form(self):
-        progress = ProgressFrame(self)
+        progress_frame = self.master.master.master.nametowidget('.!app.progress_frame')
+        progress = ProgressFrame(progress_frame)
         list_out = []
         for item in self.boxes.winfo_children():
             list_out.append(item.get_info())
         progress.pack()
-        ad_pdf.add_to_queue((list_out, progress))
+        global address_history
+        address_history.append(list_out)
+        progress.pack()
+        progress_frame.update()
+        queue_item(('address', (list_out, progress)))
+
 
     def threading_form(self):
         t1 = threading.Thread(target=self.submit_form)
         t1.start()
+
+    def load_previous(self):
+        global address_history
+        print(address_history)
+        messagebox.askquestion(title='Ello', message='Loading previous address')
 
 
 class AddressBox(tk.Frame):
@@ -110,7 +190,7 @@ class AddressBox(tk.Frame):
     def enable_entry(self):
         self.address_box.config(state='normal')
     def disable_entry(self):
-        self.address_box.config(state='disabled', bg='black')
+        self.address_box.config(state='disabled', bg='black', fg='black')
 
     def update_bg(self):
         selection = self.selection.get()
@@ -120,7 +200,7 @@ class AddressBox(tk.Frame):
             self.enable_entry()
             return
         if str(selection) == 'crs':
-            self.address_box['bg'] = '#CCCCCC'
+            self.address_box['bg'] = '#DDDDDD'
             self.address_box['fg'] = 'black'
             self.enable_entry()
             return
@@ -213,19 +293,15 @@ class LettersWindow(tk.Frame):
         self.name_entry.delete('1.0', 'end-1c')
 
     def print_letters(self):
-        progress = ProgressFrame(self)
-        self.update()
+        progress_frame = self.master.master.master.nametowidget('.!app.progress_frame')
+        progress = ProgressFrame(progress_frame)
         names_entry = self.name_entry.get('1.0', 'end-1c').split('\n')
         names_list = [name.strip().capitalize() for name in names_entry if name]
         company = str(self.company.get())
         country = str(self.country.get())
         progress.pack()
-        main.add_to_queue(
-            (names_list,
-            company.lower(),
-            progress,
-            country.lower(),)
-        )
+        progress_frame.update()
+        queue_item(('letter',(names_list, company.lower(), progress, country.lower(),)))
 
     def threading_letters(self):
         t1 = threading.Thread(target=self.print_letters)
@@ -284,6 +360,10 @@ class App(tk.Frame):
         self.nb.add(address_window, text='Addresses')
 
         self.nb.pack()
+
+        self.progress_frame = tk.Frame(self, name='progress_frame')
+        self.progress_frame.pack()
+
 
 
 if __name__ == '__main__':
